@@ -29,15 +29,13 @@ print(head(activity_data))
 ```{r}
 steps_per_day = activity_data %>%
     group_by(date) %>%
-    summarize(sumSteps = sum(steps))
+    summarize(sumSteps = sum(steps, na.rm = TRUE))
 
 steps_per_day
 
-# The "traditional" way to calculate the mean in R
-ms = mean(steps_per_day$sumSteps, na.rm = TRUE)
-ms
-
-# The "traditional" way to calculate the median in R
+# The "traditional" way to calculate the mean and median in R
+ms1 = mean(steps_per_day$sumSteps, na.rm = TRUE)
+ms1 
 ms2 = median(steps_per_day$sumSteps, na.rm = TRUE)
 ms2
 
@@ -51,9 +49,9 @@ steps_per_day %>%
     labs(x="Date") +
     labs(y="Number of Steps") + 
     labs(title="Steps per Day") +
-    geom_hline(aes(yintercept = ms)) + 
+    geom_hline(aes(yintercept = ms1)) + 
     geom_text(
-        aes(0,ms, label=paste("mean =", round(ms,2)))
+        aes(0,ms1, label=paste("mean =", round(ms1,2)))
         , vjust=-0.5
         , hjust=-0.1
         , size=4
@@ -65,14 +63,105 @@ steps_per_day %>%
 
 ### What is the average daily activity pattern?
 ```{r}
-activity_data %>%
-    ggplot(aes(x=interval, y=steps) + 
+steps_per_interval = activity_data %>%
+    group_by(interval) %>%
+    summarize(
+        sumSteps = sum(steps, na.rm = TRUE)
+        , meanSteps = mean(steps, na.rm = TRUE)
+        )
+
+steps_per_interval
+
+ms3 = mean(steps_per_interval$meanSteps, na.rm = TRUE)
+ms4 = steps_per_interval %>%
+    filter(meanSteps == max(meanSteps)) %>%
+    select(interval)
+
+steps_per_interval %>%
+    ggplot(aes(x=interval, y=meanSteps)) + 
     geom_line() +
+    geom_hline(aes(yintercept = ms3)) + 
+    geom_vline(xintercept = as.numeric(ms4), linetype="dashed") +
+    geom_text(
+        aes(as.numeric(ms4),0, label=paste("max =", round(as.numeric(ms4),0)))
+        , vjust=0
+        , hjust=-0.1
+        , size=4
+        ) +
     theme_bw()
 ```
 
 ### Imputing missing values
+Earlier we did a few tests on the data to see what we are working with. The summary command will provide a simple means for determining the number of NA's in our data set. 
+```{r}
+print(summary(activity_data))
+```
 
+Something additional to look at, how many NA records do we have per day?
+```{r}
+na_per_day = activity_data %>%
+    group_by(date) %>%
+    summarize(
+        sumSteps = sum(steps, na.rm=TRUE)
+        , numRecords = n()
+        , numNa = sum(is.na(steps))
+        ) %>%
+    filter(numNa > 0)
+
+na_per_day
+```
+
+```{r, echo=FALSE}
+total_na = na_per_day %>%
+    summarize(sumNa = sum(numNa)) %>%
+    select(sumNa)
+```
+
+The results above shows `r nrow(na_per_day) ` reccords containing 1 or more NA values. The total number of NA values in the dataset is `r as.numeric(total_na)` (same number as shown in the summary). 
+
+A simple strategy that can be used to fill in these missing values with the mean value. 
+
+Note: I would like to get fancy and use a a normal distribution on the existing data to determine the mean and standard deviation of the steps, use a random number generator with these results to populate an approximation of the steps on that day, but that strategy is rather sophisticated and would take quite some time & effort to produce. It would be a better model/simulation than just using the median or mean though. 
+
+```{r}
+average_steps = mean(activity_data$steps, na.rm=TRUE)
+average_steps
+
+imputed_data = activity_data %>%
+    mutate(imputed_steps = ifelse(is.na(steps), average_steps, steps))
+
+imputed_steps_per_day = imputed_data %>%
+    group_by(date) %>%
+    summarize(
+        sumSteps = sum(steps, na.rm = TRUE)
+        , imputed_sumSteps = sum(imputed_steps, na.rm=TRUE)
+        )
+```
+
+Recreating the previous histogram with the imputed data we get:
+```{r}
+
+ms5 = mean(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE) 
+ms5
+ms6 = median(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE)
+ms6
+
+imputed_steps_per_day %>%
+    ggplot(aes(x=factor(date), y=imputed_sumSteps)) +
+    geom_bar(fill="slateblue", stat="identity", alpha=0.8) +
+    labs(x="Date") +
+    labs(y="Number of Steps") + 
+    labs(title="Steps per Day") +
+    geom_hline(aes(yintercept = ms5)) + 
+    geom_text(
+        aes(0,ms5, label=paste("mean =", round(ms5,2)))
+        , vjust=-0.5
+        , hjust=-0.1
+        , size=4
+        ) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle=90, size=8))
+```
 
 ### Are there differences in activity patterns between weekdays and weekends?
 
