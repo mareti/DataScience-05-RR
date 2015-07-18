@@ -1,0 +1,80 @@
+# Reproducible Research Assignment 1
+Muralidhar Areti  
+Jul 17, 2015
+
+## Introduction
+This R Markdown file contains the code and results of the work required for submission for the first peer assessment. 
+
+### Loading and preprocessing the data
+The first step of the assignment is to load the dataset. 
+```{r}
+suppressPackageStartupMessages(library(dplyr))
+library(lubridate)
+library(ggplot2)
+
+activity_data = read.csv("activity.csv"
+             , na.strings="NA"
+             )
+```
+
+During my initial loads I like to print the dimensions, structure, summary and top few rows to get an idea of the data I am working with. 
+```{r}
+print(dim(activity_data))
+print(str(activity_data))
+print(summary(activity_data))
+print(head(activity_data))
+```
+
+### What is the mean total number of steps taken per day?
+```{r}
+steps_per_day = activity_data %>%
+    group_by(date) %>%
+    summarize(sumSteps = sum(steps))
+
+steps_per_day
+
+# The "traditional" way to calculate the mean in R
+ms = mean(steps_per_day$sumSteps, na.rm = TRUE)
+ms
+
+# The "traditional" way to calculate the median in R
+ms2 = median(steps_per_day$sumSteps, na.rm = TRUE)
+ms2
+
+# Calculate the mean and median using dplyr
+summarize(steps_per_day, mean_steps = mean(sumSteps, na.rm = TRUE))
+summarize(steps_per_day, median_steps = median(sumSteps, na.rm = TRUE))
+
+steps_per_day %>%
+    ggplot(aes(x=factor(date), y=sumSteps)) +
+    geom_bar(fill="steelblue", stat="identity", alpha=0.8) +
+    labs(x="Date") +
+    labs(y="Number of Steps") + 
+    labs(title="Steps per Day") +
+    geom_hline(aes(yintercept = ms)) + 
+    geom_text(
+        aes(0,ms, label=paste("mean =", round(ms,2)))
+        , vjust=-0.5
+        , hjust=-0.1
+        , size=4
+        ) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle=90, size=8))
+```
+
+
+### What is the average daily activity pattern?
+```{r}
+activity_data %>%
+    ggplot(aes(x=interval, y=steps) + 
+    geom_line() +
+    theme_bw()
+```
+
+### Imputing missing values
+
+
+### Are there differences in activity patterns between weekdays and weekends?
+
+
+
