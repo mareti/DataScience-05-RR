@@ -7,7 +7,7 @@ This R Markdown file contains the code and results of the work required for subm
 
 ### Loading and preprocessing the data
 The first step of the assignment is to load the dataset. 
-```{r}
+```{r 1.1 - load data}
 suppressPackageStartupMessages(library(dplyr))
 library(lubridate)
 library(ggplot2)
@@ -18,7 +18,7 @@ activity_data = read.csv("activity.csv"
 ```
 
 During my initial loads I like to print the dimensions, structure, summary and top few rows to get an idea of the data I am working with. 
-```{r}
+```{r 1.2 - test data}
 print(dim(activity_data))
 print(str(activity_data))
 print(summary(activity_data))
@@ -26,23 +26,31 @@ print(head(activity_data))
 ```
 
 ### What is the mean total number of steps taken per day?
-```{r}
+I like using the dplyr package because the logic (and to a lesser degree syntax) structure is very similar to SQL. The section below simply groups the data by the date (in its current form it is a string factor) and summarizes the results to provide the total number of steps measured on that day. 
+```{r 2.1 - steps per day}
 steps_per_day = activity_data %>%
     group_by(date) %>%
     summarize(sumSteps = sum(steps, na.rm = TRUE))
 
 steps_per_day
+```
 
-# The "traditional" way to calculate the mean and median in R
+There are two ways to determine the mean and the median, the traditional way: 
+```{r 2.1 - mean and median steps per day}
 ms1 = mean(steps_per_day$sumSteps, na.rm = TRUE)
 ms1 
 ms2 = median(steps_per_day$sumSteps, na.rm = TRUE)
 ms2
+```
 
-# Calculate the mean and median using dplyr
+And the by using dplyr:
+```{r 2.1 - mean and median steps per day dplyr}
 summarize(steps_per_day, mean_steps = mean(sumSteps, na.rm = TRUE))
 summarize(steps_per_day, median_steps = median(sumSteps, na.rm = TRUE))
+```
 
+Below is the plot of the histogram showing how many steps were measured per day:
+```{r 2.2 - histogram of steps per day}
 steps_per_day %>%
     ggplot(aes(x=factor(date), y=sumSteps)) +
     geom_bar(fill="steelblue", stat="identity", alpha=0.8) +
@@ -62,7 +70,8 @@ steps_per_day %>%
 
 
 ### What is the average daily activity pattern?
-```{r}
+First we must perform some data management tasks to ensure we have the right details required for plotting. 
+```{r 3.1 - daily activity pattern}
 steps_per_interval = activity_data %>%
     group_by(interval) %>%
     summarize(
@@ -90,6 +99,8 @@ steps_per_interval %>%
         ) +
     theme_bw()
 ```
+
+The chart shows you the mean (solid horizontal line) and the interval that had the most steps (vertical dashed line). The maximum number of steps was measured at interval `r as.numeric(ms4) `. 
 
 ### Imputing missing values
 Earlier we did a few tests on the data to see what we are working with. The summary command will provide a simple means for determining the number of NA's in our data set. 
@@ -136,10 +147,10 @@ imputed_steps_per_day = imputed_data %>%
         sumSteps = sum(steps, na.rm = TRUE)
         , imputed_sumSteps = sum(imputed_steps, na.rm=TRUE)
         )
-```
 
-Recreating the previous histogram with the imputed data we get:
-```{r}
+
+# Recreating the previous histogram with the imputed data we get:
+
 
 ms5 = mean(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE) 
 ms5
@@ -163,7 +174,30 @@ imputed_steps_per_day %>%
     theme(axis.text.x = element_text(angle=90, size=8))
 ```
 
-### Are there differences in activity patterns between weekdays and weekends?
+The charts look similar, but still shows there are some questions to be made with the data regarding days where there is a huge variation in the steps measured. This could be a result of having to charge the device, hence it was plugged in and stationary, or the wearer just didn't have it on. Filling in the NA results with just the mean doesn't account for these other reasons. 
 
+<!-- this part is giving issues all of a sudden... -->
+### Are there differences in activity patterns between weekdays and weekends?
+First lets check to see if we can determine which days are weekdays:
+```{r}
+weekday_dataset = activity_data %>%
+   mutate(
+        date = as.Date(date)
+        , weekdayName = weekdays(date)
+        , weekendFlag = ifelse(
+            weekdayName == "Sunday" | weekdayName == "Saturday"
+            , "Weekend"
+            , "Weekday"
+            )
+        ) %>%
+    group_by(interval, weekendFlag) %>%
+    summarize(meanSteps = mean(steps, na.rm=TRUE))
+
+weekday_dataset %>%
+    ggplot(aes(x=interval, y=meanSteps)) + 
+    geom_line() +
+    facet_grid(weekendFlag ~ .) +
+    theme_bw()
+```
 
 
