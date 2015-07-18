@@ -254,9 +254,12 @@ imputed_steps_per_day = imputed_data %&gt;%
         )</code></pre>
 <p>Recreating the previous histogram with the imputed data we get:</p>
 <pre class="r"><code>ms5 = mean(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE) 
-ms6 = median(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE)
-
-imputed_steps_per_day %&gt;%
+ms5</code></pre>
+<pre><code>## [1] 10766.19</code></pre>
+<pre class="r"><code>ms6 = median(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE)
+ms6</code></pre>
+<pre><code>## [1] 10766.19</code></pre>
+<pre class="r"><code>imputed_steps_per_day %&gt;%
     ggplot(aes(x=factor(date), y=imputed_sumSteps)) +
     geom_bar(fill=&quot;slateblue&quot;, stat=&quot;identity&quot;, alpha=0.8) +
     labs(x=&quot;Date&quot;) +
