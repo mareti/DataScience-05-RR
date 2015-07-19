@@ -190,12 +190,17 @@ weekday_dataset = activity_data %>%
         ) %>%
     group_by(interval, weekendFlag) %>%
     summarize(meanSteps = mean(steps, na.rm=TRUE))
+```
 
+Now that the dataset has been set we can create our desired plot. 
+```{r 5.1 Plot the weekday and weekend steps}
 weekday_dataset %>%
     ggplot(aes(x=interval, y=meanSteps)) + 
     geom_line() +
     facet_grid(weekendFlag ~ .) +
     theme_bw()
 ```
+
+The plot would likely be more informative if the actual time was used instead of an interval. At a glance I'm guessing the subject gets up in the morning, has a huge activity spike (getting ready for work perhaps?) and then sits at a desk for most of the day and then winds down (carpools home?). The weekend has higher peaks than during the week,  most likely moves around more or has activities/chores to do over the weekends. 
 
 End of file. 
