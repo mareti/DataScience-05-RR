@@ -104,12 +104,12 @@ The chart shows you the mean (solid horizontal line) and the interval that had t
 
 ### Imputing missing values
 Earlier we did a few tests on the data to see what we are working with. The summary command will provide a simple means for determining the number of NA's in our data set. 
-```{r}
+```{r 4.1 - checking for NAs}
 print(summary(activity_data))
 ```
 
-Something additional to look at, how many NA records do we have per day?
-```{r}
+Something additional to look at, how many NA records do we have per day? The code below applies the same methodology from determining the number of steps per day, determines how many NA values are present for each data and filters the data set to show only the days that have NA values and the number of NA values for that day. 
+```{r 4.1 - checking for NAs per day}
 na_per_day = activity_data %>%
     group_by(date) %>%
     summarize(
@@ -122,7 +122,7 @@ na_per_day = activity_data %>%
 na_per_day
 ```
 
-```{r, echo=FALSE}
+```{r 4.1 - summarize NAs for prose, echo=FALSE}
 total_na = na_per_day %>%
     summarize(sumNa = sum(numNa)) %>%
     select(sumNa)
@@ -134,7 +134,7 @@ A simple strategy that can be used to fill in these missing values with the mean
 
 Note: I would like to get fancy and use a a normal distribution on the existing data to determine the mean and standard deviation of the steps, use a random number generator with these results to populate an approximation of the steps on that day, but that strategy is rather sophisticated and would take quite some time & effort to produce. It would be a better model/simulation than just using the median or mean though. 
 
-```{r}
+```{r 4.3 - Impute data}
 average_steps = mean(activity_data$steps, na.rm=TRUE)
 average_steps
 
@@ -147,11 +147,10 @@ imputed_steps_per_day = imputed_data %>%
         sumSteps = sum(steps, na.rm = TRUE)
         , imputed_sumSteps = sum(imputed_steps, na.rm=TRUE)
         )
+```
 
-
-# Recreating the previous histogram with the imputed data we get:
-
-
+Recreating the previous histogram with the imputed data we get:
+```{r 4.3 Graphing the imputed data}
 ms5 = mean(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE) 
 ms5
 ms6 = median(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE)
@@ -176,10 +175,9 @@ imputed_steps_per_day %>%
 
 The charts look similar, but still shows there are some questions to be made with the data regarding days where there is a huge variation in the steps measured. This could be a result of having to charge the device, hence it was plugged in and stationary, or the wearer just didn't have it on. Filling in the NA results with just the mean doesn't account for these other reasons. 
 
-<!-- this part is giving issues all of a sudden... -->
 ### Are there differences in activity patterns between weekdays and weekends?
 First lets check to see if we can determine which days are weekdays:
-```{r}
+```{r 5.1 find and compare weekday vs weekend}
 weekday_dataset = activity_data %>%
    mutate(
         date = as.Date(date)
@@ -200,4 +198,4 @@ weekday_dataset %>%
     theme_bw()
 ```
 
-
+End of file. 
