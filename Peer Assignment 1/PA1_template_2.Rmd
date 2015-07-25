@@ -1,12 +1,11 @@
 ---
-title: "Reproducible Research Assignment 1"
+title: "Untitled"
 output: 
     html_document: 
-        keep_md: true
+        keep_me: true
 ---
-
 Muralidhar Areti  
-Jul 17, 2015
+July 24, 2015
 
 ## Introduction
 This R Markdown file contains the code and results of the work required for submission for the first peer assessment. 
@@ -23,17 +22,14 @@ activity_data = read.csv("activity.csv"
              )
 ```
 
-During my initial loads I like to print the dimensions, structure, summary and top few rows to get an idea of the data I am working with. 
-```{r 1.2 - test data}
+```{r 1.2 - test data, results='hide'}
 print(dim(activity_data))
 print(str(activity_data))
 print(summary(activity_data))
 print(head(activity_data))
 ```
 
-### What is the mean total number of steps taken per day?
-I like using the dplyr package because the logic (and to a lesser degree syntax) structure is very similar to SQL. The section below simply groups the data by the date (in its current form it is a string factor) and summarizes the results to provide the total number of steps measured on that day. 
-```{r 2.1 - steps per day}
+```{r 2.1 - steps per day, results='hide'}
 steps_per_day = activity_data %>%
     group_by(date) %>%
     summarize(sumSteps = sum(steps, na.rm = TRUE))
@@ -42,15 +38,13 @@ steps_per_day
 ```
 
 There are two ways to determine the mean and the median, the traditional way: 
-```{r 2.1 - mean and median steps per day}
+```{r 2.1 - mean and median steps per day, results='hide'}
 ms1 = mean(steps_per_day$sumSteps, na.rm = TRUE)
-ms1 
 ms2 = median(steps_per_day$sumSteps, na.rm = TRUE)
-ms2
 ```
 
 And the by using dplyr:
-```{r 2.1 - mean and median steps per day dplyr}
+```{r 2.1 - mean and median steps per day dplyr, results='hide'}
 summarize(steps_per_day, mean_steps = mean(sumSteps, na.rm = TRUE))
 summarize(steps_per_day, median_steps = median(sumSteps, na.rm = TRUE))
 ```
@@ -74,7 +68,6 @@ steps_per_day %>%
     theme(axis.text.x = element_text(angle=90, size=8))
 ```
 
-
 ### What is the average daily activity pattern?
 First we must perform some data management tasks to ensure we have the right details required for plotting. 
 ```{r 3.1 - daily activity pattern}
@@ -84,8 +77,7 @@ steps_per_interval = activity_data %>%
         sumSteps = sum(steps, na.rm = TRUE)
         , meanSteps = mean(steps, na.rm = TRUE)
         )
-
-steps_per_interval
+# steps_per_interval
 
 ms3 = mean(steps_per_interval$meanSteps, na.rm = TRUE)
 ms4 = steps_per_interval %>%
@@ -106,15 +98,8 @@ steps_per_interval %>%
     theme_bw()
 ```
 
-The chart shows you the mean (solid horizontal line) and the interval that had the most steps (vertical dashed line). The maximum number of steps was measured at interval `r as.numeric(ms4) `. 
 
 ### Imputing missing values
-Earlier we did a few tests on the data to see what we are working with. The summary command will provide a simple means for determining the number of NA's in our data set. 
-```{r 4.1 - checking for NAs}
-print(summary(activity_data))
-```
-
-Something additional to look at, how many NA records do we have per day? The code below applies the same methodology from determining the number of steps per day, determines how many NA values are present for each data and filters the data set to show only the days that have NA values and the number of NA values for that day. 
 ```{r 4.1 - checking for NAs per day}
 na_per_day = activity_data %>%
     group_by(date) %>%
@@ -136,11 +121,7 @@ total_na = na_per_day %>%
 
 The results above shows `r nrow(na_per_day) ` reccords containing 1 or more NA values. The total number of NA values in the dataset is `r as.numeric(total_na)` (same number as shown in the summary). 
 
-A simple strategy that can be used to fill in these missing values with the mean value. 
-
-Note: I would like to get fancy and use a a normal distribution on the existing data to determine the mean and standard deviation of the steps, use a random number generator with these results to populate an approximation of the steps on that day, but that strategy is rather sophisticated and would take quite some time & effort to produce. It would be a better model/simulation than just using the median or mean though. 
-
-```{r 4.3 - Impute data}
+```{r 4.3 - Impute data, results='hide'}
 average_steps = mean(activity_data$steps, na.rm=TRUE)
 average_steps
 
@@ -155,12 +136,9 @@ imputed_steps_per_day = imputed_data %>%
         )
 ```
 
-Recreating the previous histogram with the imputed data we get:
 ```{r 4.3 Graphing the imputed data}
 ms5 = mean(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE) 
-ms5
 ms6 = median(imputed_steps_per_day$imputed_sumSteps, na.rm = TRUE)
-ms6
 
 imputed_steps_per_day %>%
     ggplot(aes(x=factor(date), y=imputed_sumSteps)) +
@@ -178,8 +156,6 @@ imputed_steps_per_day %>%
     theme_bw() +
     theme(axis.text.x = element_text(angle=90, size=8))
 ```
-
-The charts look similar, but still shows there are some questions to be made with the data regarding days where there is a huge variation in the steps measured. This could be a result of having to charge the device, hence it was plugged in and stationary, or the wearer just didn't have it on. Filling in the NA results with just the mean doesn't account for these other reasons. 
 
 ### Are there differences in activity patterns between weekdays and weekends?
 First lets check to see if we can determine which days are weekdays:
@@ -206,7 +182,3 @@ weekday_dataset %>%
     facet_grid(weekendFlag ~ .) +
     theme_bw()
 ```
-
-The plot would likely be more informative if the actual time was used instead of an interval. At a glance I'm guessing the subject gets up in the morning, has a huge activity spike (getting ready for work perhaps?) and then sits at a desk for most of the day and then winds down (carpools home?). The weekend has higher peaks than during the week,  most likely moves around more or has activities/chores to do over the weekends. 
-
-End of file. 
