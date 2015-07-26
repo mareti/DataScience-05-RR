@@ -3,7 +3,7 @@ Muralidhar Areti
 Jul 24, 2015
 
 ## Synopsis
-The NOAA Storm Database is created from storm data provided by the National Weather Service. This analysis aims to answer the following questions:  
+In this report we aim to assess the impact various types of storms have on population health and the economy. 
 
 1. Which types of events are most harmful with respect to population health?  
 2. Which types of events have the greatest economic consequences?  
@@ -28,6 +28,7 @@ To achieve these goals we need to provide the following results:
 
 
 ```r
+library(tidyr)
 suppressPackageStartupMessages(library(dplyr))
 library(lubridate)
 library(ggplot2)
@@ -35,10 +36,10 @@ library(scales)
 ```
 
 
-
-
 ```r
-data = read.csv("repdata-data-StormData.csv")
+url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(url, destfile="./data.csv.bz2", method="curl")
+data = read.csv("data.csv.bz2")
 ```
 
 
@@ -71,8 +72,72 @@ print(names(data))
 # print(head(data))
 ```
 
+
+```r
+working_data = data %>%
+    select(
+        BGN_DATE
+        , STATE
+        , COUNTYNAME
+        , EVTYPE
+        , FATALITIES
+        , INJURIES
+        , PROPDMG
+        ) %>%
+    mutate(
+        BGN_DATE = mdy_hms(BGN_DATE)
+        , bgn_year = year(BGN_DATE)
+        , bgn_month = month(BGN_DATE)
+        ) %>%
+    filter(year(BGN_DATE) >= 2000)
+
+# head(working_data, 10)
+```
+
+
 ## Results
 
+```r
+working_data %>% 
+    group_by(bgn_year) %>%
+    summarize(IncidentsPerYear = n()) %>%
+    ggplot(aes(x=factor(bgn_year), y=IncidentsPerYear)) +
+    geom_bar(fill="steelblue", stat="identity") + coord_flip() +
+    geom_text(aes(label=format(IncidentsPerYear, format="d", big.mark=',')
+                  , hjust=1)) +
+    labs(x="Year of Incident") +
+    labs(y="Number of Incidents") + 
+    labs(title="Incidents per Year") +
+    theme_bw() 
+```
+
+![](Peer_Assignment_2_files/figure-html/2.1 Incidents per Year-1.png) 
+
+
+```r
+working_data %>%
+    group_by(EVTYPE) %>%
+    summarize(
+        SumFatalities = sum(FATALITIES)
+        , SumInjuries = sum(INJURIES)
+        , SumFatInj = sum(FATALITIES) + sum(INJURIES)
+        ) %>%
+    top_n(10) %>% 
+    arrange(desc(SumFatInj)) %>%
+    gather(MeasureType, MeasureValue, SumFatalities:SumInjuries) %>%
+    ggplot(aes(x=factor(EVTYPE), y=MeasureValue, fill=MeasureType)) + 
+    geom_bar(stat="identity") + coord_flip() + 
+    labs(x="Incident Type") + 
+    labs(y="Measure Value") + 
+    labs(title="Top 10 Incidents by Injuries and Fatalities") +
+    theme_bw()
+```
+
+```
+## Selecting by SumFatInj
+```
+
+![](Peer_Assignment_2_files/figure-html/2.2 Injuries fatalities and property damage-1.png) 
 
 
 ```r
